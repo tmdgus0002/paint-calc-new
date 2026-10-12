@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>무광·유광 도료 계산기</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #f3f5f8; color: #222;
+}
+main {
+  max-width: 440px; margin: 20px auto;
+  padding: 24px; background: white;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px #0000000c;
+}
+h1 { font-size: 24px; margin: 0 0 8px; }
+.sub { color: #667085; font-size: 14px; margin-bottom: 24px; }
+label { display: block; font-weight: bold; margin: 18px 0 8px; }
+input {
+  width: 100%; padding: 13px;
+  font-size: 18px; border: 1px solid #ccd2dc;
+  border-radius: 9px;
+}
+button {
+  width: 100%; padding: 14px; margin-top: 16px;
+  border: 0; border-radius: 9px;
+  font-size: 16px; font-weight: bold; cursor: pointer;
+}
+.calculate { background: #245bd6; color: white; }
+.reset { background: #e9edf3; color: #222; }
+.result {
+  margin-top: 22px; padding: 20px;
+  border-radius: 12px; background: #f0f4fa;
+}
+.result-label { color: #5b6472; font-size: 14px; }
+.answer { font-size: 28px; font-weight: bold; margin: 10px 0; }
+.note { font-size: 13px; color: #667085; line-height: 1.6; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🎨 도료 비율 계산기</h1>
+  <div class="sub">무광 중량 기준 유광 첨가 비율 계산</div>
+
+  <label for="matte">무광 중량 (kg)</label>
+  <input id="matte" type="number" min="0.01" step="any"
+         placeholder="예: 10">
+
+  <label for="current">현재 유광 비율 (%)</label>
+  <input id="current" type="number" min="0" step="any"
+         placeholder="예: 20">
+
+  <label for="target">목표 유광 비율 (%)</label>
+  <input id="target" type="number" min="0" step="any"
+         placeholder="예: 30">
+
+  <button class="calculate" id="calculate">계산하기</button>
+
+  <section class="result" id="result" hidden aria-live="polite">
+    <div class="result-label">추가해야 할 도료</div>
+    <div class="answer" id="answer"></div>
+    <div class="note" id="detail"></div>
+  </section>
+
+  <button class="reset" id="reset">초기화</button>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString('ko-KR', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+$('calculate').addEventListener('click', () => {
+  const ms = $('matte').value.trim();
+  const cs = $('current').value.trim();
+  const ts = $('target').value.trim();
+
+  if (!ms || !cs || !ts) {
+    alert('세 항목을 모두 입력해 주세요.');
+    return;
+  }
+
+  const m = Number(ms);
+  const c = Number(cs);
+  const t = Number(ts);
+
+  if (!Number.isFinite(m) || !Number.isFinite(c) ||
+      !Number.isFinite(t) || m <= 0 || c < 0 || t < 0) {
+    alert('무광은 0보다 크게, 비율은 0 이상으로 입력해 주세요.');
+    return;
+  }
+
+  const currentGloss = m * c / 100;
+  const targetGloss = m * t / 100;
+  const diff = targetGloss - currentGloss;
+
+  $('result').hidden = false;
+
+  if (Math.abs(diff) < 1e-9) {
+    $('answer').textContent = '추가량 0.00 kg';
+    $('detail').textContent = '현재 비율이 목표 비율과 같습니다.';
+  } else if (diff > 0) {
+    $('answer').textContent = '유광 +' + fmt(diff) + ' kg';
+    $('detail').textContent =
+      '현재 유광 ' + fmt(currentGloss) + ' kg → 목표 유광 ' +
+      fmt(targetGloss) + ' kg';
+  } else if (t > 0) {
+    const addMatte = -diff / (t / 100);
+    $('answer').textContent = '무광 +' + fmt(addMatte) + ' kg';
+    $('detail').textContent =
+      '유광을 유지하고 무광을 추가해 목표 비율을 맞춥니다.';
+  } else {
+    $('answer').textContent = '유광 제거 필요';
+    $('detail').textContent =
+      '유광 0%를 만들려면 기존 유광을 제거해야 합니다.';
+  }
+});
+
+$('reset').addEventListener('click', () => {
+  $('matte').value = '';
+  $('current').value = '';
+  $('target').value = '';
+  $('result').hidden = true;
+});
+</script>
+</body>
+</html>
